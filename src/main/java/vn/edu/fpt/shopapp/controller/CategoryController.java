@@ -4,14 +4,13 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import vn.edu.fpt.shopapp.dto.CategoryDTO;
 
 import java.util.List;
 
 @RestController // danh dau la tra ve dang rest api
-@RequestMapping("api/v1/categories") //request mapping
+@RequestMapping("${api.prefix}/categories") //request mapping
 //@Validated => kiem tra toan bo ơ muc class
 public class CategoryController {
     @GetMapping("") //http://localhost:8080/api/v1/categories?page=1&limit=10
