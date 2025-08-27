@@ -26,6 +26,5 @@ public class ProductDTO {
     String thumbnail;
     String description;
     @JsonProperty("category_id") //mapping field same sql
-    String categoryId;
-    List<MultipartFile> files;
+    Long categoryId;
 }

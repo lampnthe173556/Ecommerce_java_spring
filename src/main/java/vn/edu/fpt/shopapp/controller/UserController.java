@@ -1,6 +1,7 @@
 package vn.edu.fpt.shopapp.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -11,12 +12,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.edu.fpt.shopapp.dto.UserDTO;
 import vn.edu.fpt.shopapp.dto.UserLoginDTO;
+import vn.edu.fpt.shopapp.services.IUserService;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("${api.prefix}/users")
+@RequestMapping("/${api.prefix}/users")
+@RequiredArgsConstructor
 public class UserController {
+    private final IUserService iUserService;
+
     @PostMapping("/register")
     public ResponseEntity<?> createUser(
             @Valid @RequestBody UserDTO userDTO,
@@ -33,6 +38,7 @@ public class UserController {
             if (!userDTO.getPassword().equals(userDTO.getRetypePassword())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password and retype password is not same");
             }
+            iUserService.createUser(userDTO);
             return ResponseEntity.ok("Register successfully");
         } catch (Exception exception) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
@@ -51,6 +57,7 @@ public class UserController {
                     .toList();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors.toString());
         }
-        return ResponseEntity.ok("some token");
+        String token = iUserService.login(userLoginDTO.getPhoneNumber(), userLoginDTO.getPassword());
+        return ResponseEntity.ok(token);
     }
 }

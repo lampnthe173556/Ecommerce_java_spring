@@ -1,10 +1,11 @@
 package vn.edu.fpt.shopapp.services;
 
+import org.springframework.stereotype.Service;
 import vn.edu.fpt.shopapp.dto.CategoryDTO;
 import vn.edu.fpt.shopapp.models.Category;
 
 import java.util.List;
-
+@Service
 public interface ICategoryService {
     Category createCategory(CategoryDTO categoryDTO);
 

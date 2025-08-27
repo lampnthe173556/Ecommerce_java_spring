@@ -1,6 +1,7 @@
 package vn.edu.fpt.shopapp.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,11 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import vn.edu.fpt.shopapp.dto.ProductDTO;
+import vn.edu.fpt.shopapp.dto.ProductImageDTO;
+import vn.edu.fpt.shopapp.exceptions.DataNotFoundException;
+import vn.edu.fpt.shopapp.models.Product;
+import vn.edu.fpt.shopapp.models.ProductImage;
+import vn.edu.fpt.shopapp.services.IProductService;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,12 +27,15 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("${api.prefix}/product")
+@RequestMapping("/${api.prefix}/product")
+@RequiredArgsConstructor
 public class ProductController {
-    @PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    private final IProductService iProductService;
+
+    @PostMapping("")
     public ResponseEntity<String> createProduct(
             @Valid @ModelAttribute ProductDTO productDTO,
-            // @RequestPart("file") MultipartFile file,
+
             BindingResult result
     ) {
         try {
@@ -37,10 +46,24 @@ public class ProductController {
                         .toList();
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors.toString());
             }
-            List<MultipartFile> files = productDTO.getFiles();
-            if (files == null) {
-                files = new ArrayList<>();
-            }
+            Product newProduct = iProductService.createProduct(productDTO);
+
+        } catch (DataNotFoundException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+        return ResponseEntity.ok("product created successfully");
+
+    }
+
+    @PostMapping(value = "uploads/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> uploadFile(
+            @PathVariable Long id,
+            @ModelAttribute("files") List<MultipartFile> files
+    ) {
+        try {
+            Product existingProduct = iProductService.getProductById(id);
+            files = files == null ? new ArrayList<>() : files;
+            List<ProductImage> productImages = new ArrayList<>();
             for (MultipartFile file : files) {
                 if (file != null) {
                     if (file.getSize() > 10 * 1024 * 1024) {
@@ -56,13 +79,19 @@ public class ProductController {
                 }
                 //check size and fomart file
                 String fileName = storeFile(file);
+                ProductImage productImage = iProductService.createProductImage(
+                        existingProduct.getId(), ProductImageDTO
+                                .builder()
+                                .productId(existingProduct.getId())
+                                .imageUrl(fileName)
+                                .build());
+                productImages.add(productImage);
             }
-
-
-            return ResponseEntity.ok("insert succesfully");
-        } catch (Exception exception) {
-            return ResponseEntity.badRequest().body(exception.getMessage());
+            return ResponseEntity.ok(productImages.toString());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
+
     }
 
     @GetMapping("") //http://localhost:8080/api/v1/product
